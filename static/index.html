@@ -288,12 +288,13 @@
 				};
 				socket.onmessage = function (msg) {
 					try {
-						if (msg.data === "clear") {
+						const data = JSON.parse(msg.data);
+
+						if (data.clear) {
 							// clear the world
 							world = {};
 						} else {
 							// update the world
-							const data = JSON.parse(msg.data);
 							for (obj in data) world[obj] = data[obj];
 						}
 
@@ -305,7 +306,8 @@
 			}
 
 			function clearWorld() {
-				socket.send("clear");
+				socket.send(JSON.stringify({ clear: "true" }));
+				// socket.send("clear");
 			}
 
 			wsSetup();

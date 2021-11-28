@@ -115,22 +115,19 @@ def read_ws(ws, client):
             # print("WS RECV: %s" % msg)
 
             if (msg is not None):
-                if msg == "clear":
+                # otherwise, update the entities
+                packet = json.loads(msg)
+
+                if packet.get("clear", False):
                     # clear the world if we get a clear message
                     myWorld.clear()
-
-                    # send a message to clear
-                    send_all("clear")
                 else:
-                    # otherwise, update the entities
-                    packet = json.loads(msg)
-
                     # update world
                     for entity in packet:
                         myWorld.set(entity, packet[entity])
-                    
-                    # send update
-                    send_all_json( packet )
+                
+                # send update
+                send_all_json( packet )
             else:
                 break
     except:
