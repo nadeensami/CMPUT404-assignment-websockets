@@ -14,12 +14,10 @@
 # limitations under the License.
 #
 
-import flask
 from flask import Flask, request, redirect, Response
 from flask_sockets import Sockets
 import gevent
 from gevent import queue
-import time
 import json
 import os
 
@@ -73,6 +71,7 @@ def send_all(msg):
 
 def send_all_json(obj):
     send_all( json.dumps(obj) )
+
 class Client:
     def __init__(self):
         self.queue = queue.Queue()
@@ -86,6 +85,9 @@ class Client:
 
 def set_listener( entity, data ):
     ''' do something with the update ! '''
+    # if client is connecting with HTTP and not WS
+    # would still like to update all clients
+    send_all_json({entity: data})
 
 myWorld.add_set_listener( set_listener )
 
@@ -103,17 +105,32 @@ def flask_post_json():
 
 def read_ws(ws, client):
     '''A greenlet function that reads from the websocket and updates the world'''
-    # when a client connects, update all clients
-    send_all_json( myWorld.world() )
+
+    # when a client connects, send it the world
+    client.put(json.dumps(myWorld.world()))
+
     try:
         while True:
             msg = ws.receive()
-            print("WS RECV: %s" % msg)
+            # print("WS RECV: %s" % msg)
+
             if (msg is not None):
-                packet = json.loads(msg)
-                for entity in packet:
-                    myWorld.set(entity, packet[entity])
-                send_all_json( packet )
+                if msg == "clear":
+                    # clear the world if we get a clear message
+                    myWorld.clear()
+
+                    # send a message to clear
+                    send_all("clear")
+                else:
+                    # otherwise, update the entities
+                    packet = json.loads(msg)
+
+                    # update world
+                    for entity in packet:
+                        myWorld.set(entity, packet[entity])
+                    
+                    # send update
+                    send_all_json( packet )
             else:
                 break
     except:
@@ -148,9 +165,9 @@ def update(entity):
     # get entities to update
     data = flask_post_json()
     
-    #iterate through the data and update each key
-    for key, value in data.items():
-        myWorld.update(entity, key, value)
+    # iterate through the data and update each key
+    for entity in data:
+        myWorld.set(entity, data[entity])
 
     # JSONify data
     response_data = json.dumps(myWorld.get(entity))
@@ -207,4 +224,6 @@ if __name__ == "__main__":
         and run
         gunicorn -k flask_sockets.worker sockets:app
     '''
-    app.run()
+    # app.run()
+    # hack that costs $0
+    os.system("bash run.sh");

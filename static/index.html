@@ -288,9 +288,15 @@
 				};
 				socket.onmessage = function (msg) {
 					try {
-						//XXX: TODO What are you going to do here?
-						// add data we got to the world
-						world = { ...world, ...JSON.parse(msg.data) };
+						if (msg.data === "clear") {
+							// clear the world
+							world = {};
+						} else {
+							// update the world
+							const data = JSON.parse(msg.data);
+							for (obj in data) world[obj] = data[obj];
+						}
+
 						drawNextFrame();
 					} catch (e) {
 						alert("socket on message: " + e);
@@ -299,12 +305,7 @@
 			}
 
 			function clearWorld() {
-				fetch("/clear").then((response) => {
-					response.json().then((data) => {
-						world = data;
-						drawNextFrame();
-					});
-				});
+				socket.send("clear");
 			}
 
 			wsSetup();
