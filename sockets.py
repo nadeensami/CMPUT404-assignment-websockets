@@ -14,6 +14,12 @@
 # limitations under the License.
 #
 
+'''
+    References:
+    - Code from Websockets lectures, author: Hazel Campbell, https://github.com/hazelybell
+        https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/chat.py
+'''
+
 from flask import Flask, request, redirect, Response
 from flask_sockets import Sockets
 import gevent
@@ -62,7 +68,6 @@ class World:
 myWorld = World()
 
 
-# https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/chat.py
 clients = list()
 
 def send_all(msg):
